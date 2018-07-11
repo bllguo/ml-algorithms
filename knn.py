@@ -1,8 +1,7 @@
-import pandas as pd
 import numpy as np
-import seaborn as sns
+from sklearn.datasets import load_iris
 from sklearn.neighbors import KNeighborsClassifier
-from scipy.stats import norm
+
 
 class KNearestNeighborsClassifier:
     """
@@ -17,13 +16,13 @@ class KNearestNeighborsClassifier:
     K: int
         number of nearest neighbors
     """
-    def fit(self, X, y):
+    def fit(self, x, y):
         """
         Initialize K-NN model
 
         Parameters
         ----------
-        X: array-like
+        x: array-like
             training data
         y: array-like
             training labels
@@ -32,58 +31,56 @@ class KNearestNeighborsClassifier:
         -------
         self: object
         """
-        self.X = X
-        self.y = y
-        return(self)
-    
-    def predict(self, newX, K=5):
+        self.x = np.array(x)
+        self.y = np.array(y)
+        return self
+
+    def predict(self, test, k=5):
         """
         Predicts class labels given test data newX, by looking at K nearest neighbors
 
         Parameters
         ----------
-        newX: array-like
+        test: array-like
             test data
-        K: int
-            number of neighbors    
-        
+        k: int
+            number of neighbors
+
         Returns
         -------
         C: Series
             Predicted labels for test data
         """
-        classes = pd.unique(self.y)
-        return(newX.apply(self.computeClass, axis=1, args=(K,)))
+        return np.apply_along_axis(self.compute_class, axis=1, arr=test, k=k)
 
-    def computeClass(self, rowX, K):
+    def compute_class(self, row, k):
         """
         Assigns class label for given observation rowX
 
         Parameters
         ----------
-        rowX: array-like, shape(n,)
+        row: array-like, shape(n,)
             test observation
-        K: int
+        k: int
             number of neighbors
 
         Returns
         -------
         C: int/string
-            Predicted class label for rowX
+            Predicted class label for row
         """
-        distances = (rowX-X).apply(np.linalg.norm, axis=1)
-        labels, counts = np.unique(self.y[np.argpartition(distances, K)[:K]], return_counts=True)
-        return(labels[np.argmax(counts)])
+        distances = np.apply_along_axis(np.linalg.norm, axis=1, arr=row-self.x)
+        labels, counts = np.unique(self.y[np.argpartition(distances, k)[:k]], return_counts=True)
+        return labels[np.argmax(counts)]
+
 
 # Test against sklearn
-df = sns.load_dataset('iris')
-y = df['species']
-X = df.iloc[:,:4]
+X, y = load_iris(True)
 
 knn = KNearestNeighborsClassifier()
 knn.fit(X, y)
-knnpred = knn.predict(X).values
+knnpred = knn.predict(X)
 
 sk = KNeighborsClassifier()
-sk.fit(X,y)
+sk.fit(X, y)
 skpred = sk.predict(X)
